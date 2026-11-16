@@ -3,7 +3,7 @@ import { Lock, Mail, X } from 'lucide-react';
 import { loginUser } from '../services/api.js';
 
 export default function AuthModal({ isOpen, onClose, onAuthSuccess, language = 'en' }) {
-  const [email, setEmail] = useState('doctor@viora.org');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);

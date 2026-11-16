@@ -11,6 +11,7 @@ export default function PatientIntakePortal({ language, onStructureComplete, onR
   const [complaint, setComplaint] = useState('');
   const [answers, setAnswers] = useState({});
   const [questions, setQuestions] = useState(null);
+  const [allowAiProcessing, setAllowAiProcessing] = useState(false);
   const [questionNotice, setQuestionNotice] = useState('');
   const [caseData, setCaseData] = useState(null);
   const [error, setError] = useState('');
@@ -41,14 +42,25 @@ export default function PatientIntakePortal({ language, onStructureComplete, onR
     }
     setError('');
     setQuestionNotice('');
-    try {
-      const result = await getClinicalQuestions({ complaint, language });
-      setQuestions(result.questions || null);
-    } catch {
-      setQuestions(null);
+    setQuestions([]);
+    if (allowAiProcessing) {
+      try {
+        const result = await getClinicalQuestions({ complaint, language, allowAiProcessing: true });
+        setQuestions(result.questions || []);
+        if (!result.questions?.length) {
+          setQuestionNotice(isEnglish
+            ? 'AI questions were not returned. You can submit your report without answers.'
+            : 'एआई प्रश्न नहीं मिले। आप बिना उत्तरों के रिपोर्ट जमा कर सकते हैं।');
+        }
+      } catch {
+        setQuestionNotice(isEnglish
+          ? 'AI questions are unavailable. You can submit your report without answers.'
+          : 'एआई प्रश्न उपलब्ध नहीं हैं। आप बिना उत्तरों के रिपोर्ट जमा कर सकते हैं।');
+      }
+    } else {
       setQuestionNotice(isEnglish
-        ? 'AI questions are unavailable. Using the local question set.'
-        : 'एआई प्रश्न उपलब्ध नहीं हैं। स्थानीय प्रश्नों का उपयोग किया जा रहा है।');
+        ? 'AI was not used. You can submit your report without generated questions.'
+        : 'एआई का उपयोग नहीं किया गया। आप बिना बनाए गए प्रश्नों के रिपोर्ट जमा कर सकते हैं।');
     }
     setStep('questions');
   };
@@ -61,7 +73,9 @@ export default function PatientIntakePortal({ language, onStructureComplete, onR
         chiefComplaint: complaint,
         rawText: complaint,
         language,
-        clinicalAnswers: answers
+        clinicalAnswers: answers,
+        clinicalQuestions: questions || [],
+        allowAiProcessing
       });
       setCaseData(result.caseData);
       setStep('summary');
@@ -93,6 +107,7 @@ export default function PatientIntakePortal({ language, onStructureComplete, onR
               setComplaint('');
               setAnswers({});
               setQuestions(null);
+              setAllowAiProcessing(false);
               setCaseData(null);
               setStep('describe');
             }}
@@ -154,6 +169,33 @@ export default function PatientIntakePortal({ language, onStructureComplete, onR
                 : 'इस ब्राउज़र में आवाज़ इनपुट उपलब्ध नहीं है। आप अपनी बात लिख सकते हैं।')}
             </p>
           )}
+          <p className="mt-3 text-xs text-slate-500">
+            {isEnglish
+              ? 'Browser speech recognition may send audio to the browser provider for transcription. Typing is available instead.'
+              : 'ब्राउज़र की आवाज़ पहचान सेवा प्रतिलेखन के लिए ऑडियो अपने प्रदाता को भेज सकती है। इसके बजाय आप लिख सकते हैं।'}
+          </p>
+          <label className="mt-4 flex items-start gap-3 rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
+            <input
+              type="checkbox"
+              checked={allowAiProcessing}
+              onChange={(event) => setAllowAiProcessing(event.target.checked)}
+              className="mt-1 accent-teal-600"
+            />
+            <span>
+              {isEnglish
+                ? 'I agree to send my symptom report and answers to Groq for follow-up questions and a neutral summary. The app masks some phone, Aadhaar, and email patterns but may miss personal information; do not include names or identifiers. Groq may retain inference data for up to 30 days for reliability or abuse investigations. I can continue without AI.'
+                : 'मैं अपने लक्षण-विवरण और उत्तरों को आगे के प्रश्नों और तटस्थ सारांश के लिए Groq को भेजने की सहमति देता/देती हूँ। ऐप कुछ फोन, आधार और ईमेल पैटर्न छिपाता है, लेकिन व्यक्तिगत जानकारी छूट सकती है; नाम या पहचान-सूचक जानकारी न दें। विश्वसनीयता या दुरुपयोग की जाँच के लिए Groq इनपुट को 30 दिनों तक रख सकता है। मैं एआई के बिना भी जारी रख सकता/सकती हूँ।'}
+              {' '}
+              <a
+                href="https://console.groq.com/docs/your-data"
+                target="_blank"
+                rel="noreferrer"
+                className="font-semibold text-teal-700 underline"
+              >
+                {isEnglish ? 'Groq data policy' : 'Groq डेटा नीति'}
+              </a>
+            </span>
+          </label>
           <button
             type="button"
             onClick={openQuestions}
@@ -173,11 +215,9 @@ export default function PatientIntakePortal({ language, onStructureComplete, onR
           {questionNotice && <p role="status" className="mt-3 text-sm text-amber-700">{questionNotice}</p>}
           <div className="mt-5">
             <DynamicClinicalQuestions
-              complaint={complaint}
               answers={answers}
               onChange={setAnswers}
-              questions={questions}
-              isAiGenerated={Boolean(questions)}
+              questions={questions || []}
             />
           </div>
           <div className="mt-6 flex flex-wrap justify-between gap-3">

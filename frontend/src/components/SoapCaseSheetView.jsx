@@ -5,6 +5,9 @@ export default function SoapCaseSheetView({ caseData, language = 'en' }) {
   const isEnglish = language === 'en';
   const summary = caseData.summary || {};
   const answers = Object.entries(caseData.clinicalAnswers || {});
+  const questionLabels = new Map(
+    (caseData.clinicalQuestions || []).map((question) => [question.id, question.label])
+  );
 
   return (
     <article className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
@@ -55,16 +58,15 @@ export default function SoapCaseSheetView({ caseData, language = 'en' }) {
 
         <section>
           <h3 className="text-sm font-bold text-slate-700">
-            {isEnglish ? 'Neutral summary for clinician review' : 'चिकित्सक समीक्षा के लिए सारांश'}
+            {isEnglish ? 'Generated neutral summary' : 'तैयार किया गया तटस्थ सारांश'}
           </h3>
-          <p className="mt-2 text-sm leading-6 text-slate-700">
-            {summary.aiSummary || caseData.rawInput}
-          </p>
-          {summary.summarySource === 'fallback' && (
+          {summary.aiSummary ? (
+            <p className="mt-2 text-sm leading-6 text-slate-700">{summary.aiSummary}</p>
+          ) : (
             <p className="mt-2 text-xs text-amber-700">
               {isEnglish
-                ? 'Automated summarization was unavailable; the patient’s report is shown without interpretation.'
-                : 'स्वचालित सारांश उपलब्ध नहीं था; बिना व्याख्या के रोगी की बात दिखाई गई है।'}
+                ? 'No AI summary was generated. Review the patient’s original report above.'
+                : 'कोई एआई सारांश नहीं बनाया गया। ऊपर रोगी की मूल रिपोर्ट देखें।'}
             </p>
           )}
         </section>
@@ -88,7 +90,7 @@ export default function SoapCaseSheetView({ caseData, language = 'en' }) {
             <dl className="mt-2 grid gap-2 sm:grid-cols-2">
               {answers.map(([question, answer]) => (
                 <div key={question} className="rounded-lg bg-slate-50 p-3 text-sm">
-                  <dt className="font-semibold text-slate-700">{question}</dt>
+                  <dt className="font-semibold text-slate-700">{questionLabels.get(question) || question}</dt>
                   <dd className="mt-1 text-slate-600">{String(answer)}</dd>
                 </div>
               ))}

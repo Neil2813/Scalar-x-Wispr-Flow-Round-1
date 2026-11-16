@@ -36,8 +36,19 @@ Deferred feature code has been removed from the application source. Existing upl
 
 - **Reuse:** React/Express app structure, patient intake flow, English/Hindi UI, existing case APIs/models, triage rules, and clinician sign-off where they meet the MVP.
 - **Modify:** patient intake is guest-accessible and clinician access is authenticated; simplify navigation to intake/review; make speech capture replaceable; preserve the patient report separately from any generated summary.
-- **Research before replacing:** browser speech recognition, the current hosted Gemini integration, language translation, and any speech-to-text or text-to-speech model. Do not select models or claim language accuracy without testing and license review.
+- **Speech:** retain the browser Web Speech API as an optional convenience and keep typing as the fallback. Recognition is browser-dependent and may send audio to a server-based recognition service; disclose this before microphone use. [MDN Web Speech API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Speech_API/Using_the_Web_Speech_API)
+- **Generated questions and summaries:** use the Groq OpenAI-compatible API only after explicit patient opt-in, with the key held by the backend. Model selection is configured with `GROQ_MODEL`; quota, model availability, quality, and pricing are provider-controlled and must be checked before deployment. [Groq API](https://console.groq.com/docs/openai), [models and rates](https://console.groq.com/docs/models), [data handling](https://console.groq.com/docs/your-data)
+- **Rejected free-AI option:** do not send health reports to the unpaid Gemini API: its terms say not to submit sensitive/personal information and prohibit clinical-practice use. [Gemini API terms](https://ai.google.dev/gemini-api/docs/terms)
+- **Translation:** do not translate patient reports through a separate hosted translation API in this pilot. Preserve the original language and request generated text in the selected language; translation accuracy is not established.
+- **Emergency detection:** retain local English/Hindi red-flag rules so escalation does not depend on a hosted model, while clearly treating them as limited rules rather than diagnosis.
 - **Do not rewrite:** the frontend, backend, or database solely for technology fashion.
+
+## Implementation status
+
+- Groq was selected for opt-in AI text processing. Intake reports and answers are not sent to Groq unless the patient checks the consent box; non-consenting users can submit the original report without AI output or generated questions. Limited PII patterns are masked, but masking is not complete.
+- No local/demo persistence fallback or seeded clinician remains. MongoDB, a random `JWT_SECRET`, and an explicitly provisioned clinician account are required. The Groq key/model are optional so the patient report can still be submitted when the API is unavailable.
+- A free API tier is not a production availability or privacy guarantee. Groq states inference data is not retained by default but may be retained for up to 30 days for reliability/abuse investigations. Verify current provider terms, legal basis, consent, model status, quota, and operating cost before using real patient data.
+- The repository still has no `LICENSE`; ownership and permission remain unconfirmed. Do not distribute until resolved.
 
 ## Phases and completion checks
 
@@ -55,7 +66,7 @@ Reduce the first-run journey to language selection, symptom capture, transcript 
 
 ### 2. Language and technology evaluation
 
-Compare at least three viable options where practical for speech recognition, translation, and structured extraction. Check language coverage, real-world accents/code-switching, latency, hardware/hosting cost, maintenance, security, and license. Evaluate Wispr Flow separately as a development tool versus any proposed runtime integration.
+Compare viable options for speech recognition, translation, and structured extraction. Check language coverage, real-world accents/code-switching, latency, hardware/hosting cost, maintenance, security, and license. Evaluate Wispr Flow separately as a development tool versus any proposed runtime integration. Initial pilot choices and trade-offs are recorded above; representative accent/code-switching quality testing remains outstanding.
 
 **Complete when:** choices have source links, trade-offs, licensing notes, and a small representative test set; uncertain performance is marked for validation.
 

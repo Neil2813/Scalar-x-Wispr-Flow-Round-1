@@ -1,6 +1,11 @@
 import jwt from 'jsonwebtoken';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'viora_sih2026_binary_brains_secret_key_8842';
+const getJwtSecret = () => {
+  if (!process.env.JWT_SECRET) {
+    throw new Error('JWT_SECRET must be configured before handling authenticated requests.');
+  }
+  return process.env.JWT_SECRET;
+};
 
 /**
  * Strict route protection: Requires valid Bearer JWT token
@@ -14,7 +19,7 @@ export const protect = (req, res, next) => {
       if (!token || token === 'null' || token === 'undefined') {
         return res.status(401).json({ error: 'Not authorized, token missing' });
       }
-      const decoded = jwt.verify(token, JWT_SECRET);
+      const decoded = jwt.verify(token, getJwtSecret());
       req.user = decoded;
       return next();
     } catch (error) {
@@ -35,7 +40,7 @@ export const optionalAuth = (req, res, next) => {
     try {
       const token = req.headers.authorization.split(' ')[1];
       if (token && token !== 'null' && token !== 'undefined') {
-        const decoded = jwt.verify(token, JWT_SECRET);
+        const decoded = jwt.verify(token, getJwtSecret());
         req.user = decoded;
         return next();
       }
@@ -81,7 +86,7 @@ export const generateToken = (user, extra = {}) => {
       name: extra.name || user.name || '',
       ...extra
     },
-    JWT_SECRET,
+    getJwtSecret(),
     { expiresIn: '7d' }
   );
 };

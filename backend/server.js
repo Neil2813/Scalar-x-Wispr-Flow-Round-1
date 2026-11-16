@@ -33,6 +33,9 @@ app.use((req, res) => {
 });
 
 const startServer = async () => {
+  if (!process.env.JWT_SECRET || process.env.JWT_SECRET.length < 32) {
+    throw new Error('JWT_SECRET must be set to a random value of at least 32 characters.');
+  }
   await connectDB();
   app.listen(PORT, () => {
     console.log(`Viora API running on port ${PORT}`);
@@ -40,4 +43,7 @@ const startServer = async () => {
   });
 };
 
-startServer();
+startServer().catch((error) => {
+  console.error('Viora API could not start:', error.message);
+  process.exitCode = 1;
+});
