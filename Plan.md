@@ -80,6 +80,6 @@ Deploy a limited pilot, measure transcription correction rate, language-specific
 ## First implementation priorities
 
 1. Confirm repository ownership/license and the Wispr Flow use case.
-2. Trace the existing patient-to-clinician journey and select the single database/runtime path to support.
+2. Trace the patient-to-clinician journey and validate MongoDB plus the local/demo fallback.
 3. Agree on pilot languages, sample evaluation scenarios, and safety acceptance criteria.
 4. Then implement the MVP; do not begin with a broad rewrite or model integration.

@@ -18,7 +18,7 @@ export const connectDB = async () => {
     await mongoose.connect(uri, {
       serverSelectionTimeoutMS: 2000,
     });
-    console.log('✅ MongoDB connected successfully to:', uri);
+    console.log('MongoDB connected successfully.');
     isUsingMockDB = false;
   } catch (error) {
     console.warn('⚠️ Could not connect to MongoDB:', error.message);
@@ -30,7 +30,6 @@ export const connectDB = async () => {
 export const checkDbStatus = () => {
   return {
     connected: !isUsingMockDB && mongoose.connection.readyState === 1,
-    usingMock: isUsingMockDB,
-    uri: process.env.MONGO_URI || 'mongodb://localhost:27017/viora_db'
+    usingMock: isUsingMockDB
   };
 };
